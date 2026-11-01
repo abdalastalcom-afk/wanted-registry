@@ -18,13 +18,26 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v3
-
-    - name: Build Debug APK
+    - name: Download Android Command Line Tools
       run: |
+        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdtools.zip
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        unzip -q cmdtools.zip -d $HOME/android-sdk/cmdline-tools
+        mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+        export ANDROID_HOME=$HOME/android-sdk
+        export PATH=$PATH:$ANDROID_HOME/cmdline-tools/latest/bin
+        yes | sdkmanager --licenses || true
+        sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+
+    - name: Generate Gradle Wrapper and Build
+      run: |
+        export ANDROID_HOME=$HOME/android-sdk
+        # إنشاء ملف الإعدادات المباشر لربط الـ SDK
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
+        # إنشاء ملفات التشغيل تلقائياً وبنائها فوراً
+        gradle wrapper --gradle-version 8.0 || true
         chmod +x ./gradlew || true
-        ./gradlew assembleDebug || ./gradlew build
+        ./gradlew assembleDebug || ./gradlew packageDebug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
