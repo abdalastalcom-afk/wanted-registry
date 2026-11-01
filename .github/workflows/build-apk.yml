@@ -18,35 +18,10 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Build APK with Android Components
-      uses: reactivecircus/android-emulator-runner@v2
+    - name: Build with Gradle
+      uses: gradle/gradle-build-action@v2
       with:
-        api-level: 29
-        target: default
-        arch: x86_64
-        disable-animations: true
-        force-avd-creation: false
-        constructor: echo "Skipping emulator"
-
-    - name: Compile and Build Debug APK
-      run: |
-        export SDK_URL="https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip"
-        wget -q $SDK_URL -O sdk.zip
-        unzip -q sdk.zip -d android-sdk
-        mkdir -p android-sdk/cmdline-tools/latest
-        mv android-sdk/cmdline-tools/* android-sdk/cmdline-tools/latest/ 2>/dev/null || true
-        export ANDROID_HOME=$PWD/android-sdk
-        yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --sdk_root=$ANDROID_HOME "platforms;android-33" "build-tools;33.0.2" > /dev/null
-        
-        # إنشاء ملفات التكوين التلقائية للبناء السريع
-        echo "sdk.dir=$PWD/android-sdk" > local.properties
-        
-        # استخدام أوامر الأندرويد المباشرة للبناء
-        $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null || true
-        
-        # في حال عدم وجود ملف gradlew، سنقوم بتوليده بمرونة
-        gradle wrapper --gradle-version 8.0 || true
-        ./gradlew assembleDebug
+        arguments: assembleDebug
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
